@@ -1,7 +1,7 @@
 pragma solidity ^0.7.0;
 
 
-import "@openzepplin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -80,7 +80,7 @@ contract Invoicer is Ownable {
     */ 
     function payInvoice(uint256 invoiceNumber) public returns (bool) {
         if (validInvoice[invoiceNumber]) {
-            if (validInvoice[invoiceNumber] > 0) {
+            if (invoiceStore[invoiceNumber] > 0) {
                 usdcContract.transferFrom(msg.sender,  owner(), invoiceStore[invoiceNumber]);
                 invoiceStore[invoiceNumber] = 0;          
             }
@@ -95,11 +95,11 @@ contract Invoicer is Ownable {
     function getThePrice() public view returns (int) {
         (
             uint80 roundID, 
-            int price,
+            int256 price,
             uint startedAt,
             uint timeStamp,
             uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
+        ) =  ethUSDPriceFeed.latestRoundData();
         return price;
     }
 
@@ -110,7 +110,7 @@ contract Invoicer is Ownable {
     * @dev requires caller to have sufficient WETH to be transfered
     * @return bool only returns on not reverting
     */ 
-    function payInvoiceViaWETH(uint256 invoiceNumber) public {
+    function payInvoiceViaWETH(uint256 invoiceNumber) public returns (bool) {
         if (validInvoice[invoiceNumber]) {
             uint256 paymentAmount = invoiceStore[invoiceNumber];                
             if (paymentAmount > 0) {
@@ -119,8 +119,9 @@ contract Invoicer is Ownable {
                 // price feed is WEI/USDC
                 // output: in wei which we're taking to be 1:1 with WETH 
                 // paymentAmount / (10**6) * rate
-                uint256 rate = getThePrice();
-                uint256 wethConvertedAmount = paymentAmount.mult(rate.div(1000000)); 
+                int256 rate = getThePrice();
+                require(rate > 0, "Non-zero price required");
+                uint256 wethConvertedAmount = paymentAmount.mul(uint256(rate).div(1000000)); 
                 wethContract.transferFrom(msg.sender,  owner(), wethConvertedAmount);
                 invoiceStore[invoiceNumber] = 0;              
             }
