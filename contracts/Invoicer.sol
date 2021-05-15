@@ -4,7 +4,7 @@ pragma solidity ^0.7.0;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
+import "hardhat/console.sol";
 
 import "./interfaces/IWETH.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
@@ -100,6 +100,7 @@ contract Invoicer is Ownable {
             uint timeStamp,
             uint80 answeredInRound
         ) =  ethUSDPriceFeed.latestRoundData();
+        require(timeStamp > 0, "Round not complete");
         return price;
     }
 
@@ -122,8 +123,9 @@ contract Invoicer is Ownable {
                 int256 rate = getThePrice();
                 require(rate > 0, "Non-zero price required");
                 uint256 wethConvertedAmount = paymentAmount.mul(uint256(rate).div(1000000)); 
+                console.log("Changing greeting from '%d'", wethConvertedAmount);
                 wethContract.transferFrom(msg.sender,  owner(), wethConvertedAmount);
-                invoiceStore[invoiceNumber] = 0;              
+                invoiceStore[invoiceNumber] = 0;     
             }
             validInvoice[invoiceNumber] = false;
         }
