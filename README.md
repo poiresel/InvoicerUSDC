@@ -12,4 +12,17 @@ TODOs
 * Make the Invoicer as an interface and actually have a InvoiceFactory instead and ues the InvoiceFactory to track
 * Likely add events to emit out when certain actions are occurring
 * Strong integration tests as well as better testing the payWithWeth function
-* Make determination which Oracle to use 
+* Make determination which Oracle to use
+
+Setup Steps and run steps:
+
+```npm install``
+
+```npx hardhat compile```
+Compiles and creates the artifacts
+
+```npx hardhat test```
+Runs the tests
+
+```npx hardhat```
+General command to find out any other hardhat helpers
